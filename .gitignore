@@ -1,0 +1,21 @@
+# Dependency directories
+node_modules/
+
+# IDE files
+.vscode/
+.DS_Store
+
+# Environment variables (Crucial since you have a .env file)
+.env
+
+# Binary Apps (Don't commit large APK files)
+*.apk
+
+# Test Reports and Logs
+logs/
+reports/
+errorShots/
+
+# TypeScript/Build output (if you run tsc)
+dist/
+*.tsbuildinfo
