@@ -15,10 +15,18 @@ import { IHomePage } from './HomePage';
 import { IMainMenuPage } from './MainMenuPage';
 
 export class PageFactory {
+    private static get isMobileWeb(): boolean {
+        const browserName = (driver.capabilities.browserName ?? '').toString().toLowerCase();
+        return Boolean(browserName);
+    }
+
     /**
      * Centralized factory to return the correct LoginPage implementation
      */
     static get login(): ILoginPage {
+        if (this.isMobileWeb) {
+            return webLogin;
+        }
         if (driver.isMobile) {
             return driver.isIOS ? iosLogin : androidLogin;
         }
@@ -29,6 +37,9 @@ export class PageFactory {
      * Centralized factory to return the correct HomePage implementation
      */
     static get home(): IHomePage {
+        if (this.isMobileWeb) {
+            return webHome;
+        }
         if (driver.isMobile) {
             return driver.isIOS ? iosHome : androidHome;
         }
@@ -39,6 +50,9 @@ export class PageFactory {
      * New Menu Page implementation for the 'More' tab flow
      */
     static get menu(): IMainMenuPage {
+        if (this.isMobileWeb) {
+            return webMenu;
+        }
         if (driver.isMobile) {
             return driver.isIOS ? iosMenu : androidMenu;
         }

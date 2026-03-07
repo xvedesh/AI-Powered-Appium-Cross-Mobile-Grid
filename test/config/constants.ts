@@ -1,38 +1,48 @@
 export const HOME_SCREEN = {
+    CATALOG_SCREEN: {
+        android: '~Container for fragments',
+        ios: '~Catalog-screen',
+        web: ''
+    },
     PRODUCT_LABEL: {
-        android: 'android=new UiSelector().text("Products")',
-        ios: '-ios predicate string:name == "Products"', // Исправлено под твой скриншот
+        android: 'android=new UiSelector().description("test-PRODUCTS")',
+        ios: '-ios predicate string:name == "Products"',
         web: '.title' 
     },
-    MORE_TAB: {
-        ios: '-ios predicate string:name == "More"',
-        android: '~More',
+    HAMBURGER_MENU: {
+        ios: '-ios predicate string:name == "More-tab-item" AND visible == 1',
+        android: 'id=com.saucelabs.mydemoapp.android:id/menuIV',
         web: '#more'
     }
 }
 
 export const MENU_SCREEN = {
     LOGIN_ITEM: {
-        ios: '-ios predicate string:name == "LogOut-menu-item"',
-        android: '~Login',
+        ios: '~Login Button',
+        android: '~Login Menu Item',
         web: '//a[text()="Login"]'
     }
 }
 
 export const LOGIN_SCREEN = {
     USERNAME: {
-        ios: '-ios predicate string:type == "XCUIElementTypeTextField" AND name == "Username"',
-        android: '~Username',
+        ios: '-ios predicate string:type == "XCUIElementTypeTextField"',
+        android: 'android=new UiSelector().description("test-Username")',
         web: '#user-name'
     },
     PASSWORD: {
         ios: '-ios predicate string:type == "XCUIElementTypeSecureTextField"',
-        android: '~Password',
+        android: 'android=new UiSelector().description("test-Password")',
         web: '#password'
     },
     LOGIN_BTN: {
-        ios: '-ios predicate string:name == "Login" AND label == "Login" AND type == "XCUIElementTypeButton"',
-        android: '~Login',
+        ios: '-ios predicate string:type == "XCUIElementTypeButton" AND name == "Login"',
+        android: 'id=com.saucelabs.mydemoapp.android:id/loginBtn',
         web: '#login-button'
+    },
+    USERNAME_LINK: {
+        ios: '~bob@example.com',
+        android: 'id=com.saucelabs.mydemoapp.android:id/username1TV',
+        web: ''
     }
 }

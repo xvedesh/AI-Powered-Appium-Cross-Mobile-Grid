@@ -1,9 +1,2 @@
-import { config as baseConfig } from './wdio.conf';
-import { androidCaps } from './test/config/android.caps';
-
-export const config = {
-    ...baseConfig,
-    capabilities: [androidCaps],
-    // Явно копируем хук, чтобы TS/CommonJS его не потерял
-    afterTest: baseConfig.afterTest 
-}
+// Backward-compatible alias. Prefer using wdio.android.native.conf.ts.
+export { config } from './wdio.android.native.conf';

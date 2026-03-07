@@ -6,16 +6,25 @@ const environments = {
     qa: qaData
 };
 
-// По умолчанию берем 'qa', если ничего не передано
-const currentEnv = process.env.NODE_ENV || 'qa';
+// Prefer TEST_ENV, keep NODE_ENV fallback for backward compatibility.
+const requestedEnv = (process.env.TEST_ENV ?? process.env.NODE_ENV ?? 'qa').toLowerCase();
+const aliases: Record<string, keyof typeof environments> = {
+    test: 'qa',
+    dev: 'qa',
+    development: 'qa',
+    prod: 'stage',
+    production: 'stage'
+};
 
-// Проверяем, существует ли такая среда
+const currentEnv = (aliases[requestedEnv] ?? requestedEnv) as keyof typeof environments;
+
+// Do not crash spec loading for unknown env names; fallback to qa.
 if (!(currentEnv in environments)) {
-    throw new Error(`Environment "${currentEnv}" is not defined in env.provider.ts`);
+    console.warn(`>>> [WARN]: Unknown TEST_ENV/NODE_ENV="${requestedEnv}". Falling back to "qa".`);
 }
 
-export const ENV = environments[currentEnv as keyof typeof environments];
+export const ENV = environments[currentEnv in environments ? currentEnv : 'qa'];
 
 if (ENV.apiToken === 'PUT_TOKEN_HERE') {
-    console.warn(`>>> [WARN]: ${ENV.envName} API token is placeholder. Set ${ENV.envName}_API_TOKEN or API_TOKEN.`);
+    console.warn(`>>> [WARN]: ${ENV.envName} API token is placeholder. Set TEST_ENV-specific token or API_TOKEN.`);
 }

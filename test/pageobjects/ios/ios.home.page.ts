@@ -3,7 +3,9 @@ import { HOME_SCREEN } from '../../config/constants';
 
 class IosHome implements IHomePage {
     async isPageLoaded(): Promise<boolean> {
-        return await $(HOME_SCREEN.MORE_TAB.ios).isDisplayed();
+        const catalogScreen = $(HOME_SCREEN.CATALOG_SCREEN.ios);
+        await catalogScreen.waitForDisplayed({ timeout: 10000 });
+        return true;
     }
 
     async getProductLabelText(): Promise<string> {
@@ -11,7 +13,9 @@ class IosHome implements IHomePage {
     }
 
     async openMenu(): Promise<void> {
-        await $(HOME_SCREEN.MORE_TAB.ios).click();
+        const moreTab = $(HOME_SCREEN.HAMBURGER_MENU.ios);
+        await moreTab.waitForDisplayed({ timeout: 10000 });
+        await moreTab.click();
     }
 }
 export default new IosHome();

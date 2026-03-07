@@ -22,7 +22,20 @@
   "scripts": {
     "test": "wdio run ./wdio.conf.ts",
     "wdio": "wdio run ./wdio.conf.ts",
-    "wdio:android": "wdio run ./wdio.android.conf.ts"
+    "test:ios:native": "wdio run ./wdio.ios.native.conf.ts",
+    "test:android:native": "wdio run ./wdio.android.native.conf.ts",
+    "test:ios:web": "wdio run ./wdio.ios.web.conf.ts",
+    "test:android:web": "wdio run ./wdio.android.web.conf.ts",
+    "test:ios:native:fresh": "npm run clean:reports && npm run test:ios:native",
+    "test:android:native:fresh": "npm run clean:reports && npm run test:android:native",
+    "test:ios:web:fresh": "npm run clean:reports && npm run test:ios:web",
+    "test:android:web:fresh": "npm run clean:reports && npm run test:android:web",
+    "test:ios": "npm run test:ios:native",
+    "test:ios:fresh": "npm run test:ios:native:fresh",
+    "test:android": "npm run test:android:native",
+    "test:android:fresh": "npm run test:android:native:fresh",
+    "wdio:android": "wdio run ./wdio.android.native.conf.ts",
+    "clean:reports": "rm -rf allure-results allure-report"
   },
   "dependencies": {
     "dotenv": "^17.3.1",
