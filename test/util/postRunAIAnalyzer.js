@@ -3,9 +3,10 @@ const path = require('path');
 const OpenAI = require('openai');
 const crypto = require('crypto');
 
-const reportDir = path.join(process.cwd(), 'test', 'errorShots');
+const reportDir = path.resolve(process.cwd(), process.env.ERROR_SHOTS_DIR || path.join('test', 'errorShots'));
 const postRunLogPath = path.join(reportDir, 'post-run-ai.log');
-const allureDir = path.join(process.cwd(), 'allure-results');
+const allureDir = path.resolve(process.cwd(), process.env.ALLURE_RESULTS_DIR || 'allure-results');
+const allureReportDir = path.resolve(process.cwd(), process.env.ALLURE_REPORT_DIR || 'allure-report');
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = apiKey ? new OpenAI({ apiKey }) : null;
 
@@ -170,7 +171,7 @@ async function run() {
 
   if (processed > 0) {
     const readyMessage =
-      "Report is ready to generate, execute 'npx allure generate allure-results --clean -o allure-report' and then 'npx allure open allure-report'.";
+      `Report is ready to generate, execute 'npx allure generate "${allureDir}" --clean -o "${allureReportDir}"' and then 'npx allure open "${allureReportDir}"'.`;
     appendLog(`Updated ${processed} manifest(s) in ${reportDir}.`);
     appendLog(readyMessage);
     console.log(`>>> [POST-RUN AI]: ${readyMessage}`);

@@ -3,6 +3,7 @@ node_modules/
 .DS_Store
 .env
 allure-results/
+allure-report/
 apps/
 errorShots/
 wda_data/
