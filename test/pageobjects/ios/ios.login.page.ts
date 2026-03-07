@@ -30,12 +30,14 @@ class IOSLoginPage implements ILoginPage {
         await this.loginButton.click();
     };
 
-    async clickUserNameLink(): Promise<void> {
+    async clickCredentialsLink(): Promise<void> {
         await this.userNameLink.waitForDisplayed({timeout: 10000});
         await this.userNameLink.click();
+    };
+
+    async clickLoginButton(): Promise<void> {
         await this.loginButton.waitForDisplayed({ timeout: 10000 });
         await this.loginButton.click();
-
     };
 
     async getErrorMessage(): Promise<string> {
