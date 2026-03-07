@@ -1,8 +1,10 @@
 import PageFactory from '../pageobjects/PageFactory';
 import allureReporter from '@wdio/allure-reporter';
 
-describe('Authentication Suite', () => {
-    it('should login successfully via Main Menu', async function () {
+const platformLabel = process.env.TEST_PLATFORM ?? process.env.PLATFORM ?? 'unknown-platform';
+
+describe(`Authentication Suite [${platformLabel}]`, () => {
+    it(`should login successfully via Main Menu [${platformLabel}]`, async function () {
         const homePage = PageFactory.home;
         const menuPage = PageFactory.menu;
         const loginPage = PageFactory.login;
