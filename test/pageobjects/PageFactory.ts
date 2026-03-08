@@ -9,10 +9,14 @@ import webHome from './web/web.home.page';
 import iosMenu from './ios/ios.menu.page';
 import androidMenu from './android/android.menu.page';
 import webMenu from './web/web.menu.page';
+import iosCatalog from './ios/ios.catalog.page';
+import androidCatalog from './android/android.catalog.page';
+import webCatalog from './web/web.catalog.page';
 
 import { ILoginPage } from './LoginPage';
 import { IHomePage } from './HomePage';
 import { IMainMenuPage } from './MainMenuPage';
+import { ICatalogPage } from './CatalogPage';
 
 export class PageFactory {
     private static get isMobileWeb(): boolean {
@@ -57,6 +61,16 @@ export class PageFactory {
             return driver.isIOS ? iosMenu : androidMenu;
         }
         return webMenu;
+    }
+
+    static get catalog(): ICatalogPage {
+        if (this.isMobileWeb) {
+            return webCatalog;
+        }
+        if (driver.isMobile) {
+            return driver.isIOS ? iosCatalog : androidCatalog;
+        }
+        return webCatalog;
     }
 }
 
