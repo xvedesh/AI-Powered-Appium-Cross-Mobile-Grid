@@ -28,6 +28,22 @@ npm run test:ios:web:fresh
 npm run test:android:web:fresh
 ```
 
+Demo runs with automatic AI analysis, report generation, and report opening:
+
+```bash
+npm run test:ios:native:demo
+npm run test:android:native:demo
+npm run test:ios:web:demo
+npm run test:android:web:demo
+```
+
+Parallel demo runs with one consolidated report opened at the end:
+
+```bash
+npm run test:native:parallel:demo
+npm run test:web:parallel:demo
+```
+
 Single-spec execution:
 
 ```bash
@@ -138,6 +154,8 @@ IOS_PLATFORM_VERSION=16.2
 ANDROID_DEVICE_NAME="Pixel 7 Pro"
 ANDROID_PLATFORM_VERSION=13
 POST_RUN_AI=true
+AUTO_GENERATE_ALLURE_REPORT=true
+AUTO_OPEN_ALLURE_REPORT=true
 ```
 
 Notes:
@@ -145,6 +163,9 @@ Notes:
 - `PLATFORM` is resolved at runtime by the platform-specific configs.
 - `TEST_ENV` falls back to `NODE_ENV` and defaults to `qa`.
 - `POST_RUN_AI=true` waits for post-run AI analysis to finish so the diagnosis is written into `allure-results/<platform>` before report generation.
+- `AUTO_GENERATE_ALLURE_REPORT=true` generates the platform report automatically at the end of the run.
+- `AUTO_OPEN_ALLURE_REPORT=true` opens the generated platform report automatically after generation. This is intended for local demo use, not CI.
+- For parallel showcase runs, prefer one consolidated `allure generate` + `allure open` command after both runs finish instead of auto-opening each platform report separately.
 
 ## Appium Server URL and Base Path
 

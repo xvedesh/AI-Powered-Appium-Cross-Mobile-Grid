@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { spawn, spawnSync } from 'child_process';
 import path from 'path';
 import allureReporter from '@wdio/allure-reporter';
 import ContextCollector from './test/util/ContextCollector';
@@ -10,6 +11,25 @@ type CreateWdioConfigOptions = {
 };
 
 const toArtifactKey = (platform: PlatformTarget): string => platform.replace(/[^a-z0-9-]/gi, '-');
+const isFlagEnabled = (value: string | undefined): boolean => (value ?? 'false').toLowerCase() === 'true';
+
+const generateAllureReport = (resultsDir: string, reportDir: string): boolean => {
+    const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    const generation = spawnSync(command, ['allure', 'generate', resultsDir, '--clean', '-o', reportDir], {
+        stdio: 'inherit'
+    });
+
+    return generation.status === 0;
+};
+
+const openAllureReport = (reportDir: string): void => {
+    const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    const child = spawn(command, ['allure', 'open', reportDir], {
+        detached: true,
+        stdio: 'ignore'
+    });
+    child.unref();
+};
 
 export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOptions): WebdriverIO.Config => {
     const testEnv = (process.env.TEST_ENV ?? process.env.NODE_ENV ?? 'qa').toLowerCase();
@@ -84,17 +104,26 @@ export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOpt
             console.log('>>> [PREPARE]: Local Appium mode. WDIO Appium service will be used.');
         },
 
-        afterTest: async function (test, _context, { error, passed }) {
+        afterTest: async function (test, _context, { error, passed, duration, retries }) {
             if (!passed) {
                 const msg = error ? error.message : 'Unknown Error';
                 const postRunAiEnabled = (process.env.POST_RUN_AI ?? 'false').toLowerCase() === 'true';
 
                 try {
-                    await ContextCollector.collectErrorContext(test.title, msg);
+                    await ContextCollector.collectErrorContext({
+                        testTitle: test.title,
+                        errorMessage: msg,
+                        errorName: error?.name,
+                        stackTrace: error?.stack,
+                        specFile: test.file,
+                        suite: test.parent,
+                        retryCount: retries?.attempts,
+                        durationMs: duration
+                    });
                     allureReporter.addAttachment(
                         'AI Failure Diagnosis',
                         postRunAiEnabled
-                            ? `AI analysis will run after the test execution completes. Generate the Allure report after the run finishes to see the diagnosis.`
+                            ? `AI failure analysis will run after the test execution completes. Generate the Allure report after the run finishes to see the diagnosis.`
                             : `AI analysis is disabled. Set POST_RUN_AI=true to include the diagnosis in the Allure report.`,
                         'text/plain'
                     );
@@ -105,9 +134,17 @@ export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOpt
         },
 
         after: async function (result) {
-            const postRunAiEnabled = (process.env.POST_RUN_AI ?? 'false').toLowerCase() === 'true';
+            console.log(`>>> [GLOBAL HOOK] Tests finished. Result: ${result}`);
+        },
 
-            if (postRunAiEnabled) {
+        onComplete: async function () {
+            const postRunAiEnabled = isFlagEnabled(process.env.POST_RUN_AI);
+            const autoGenerateAllure = isFlagEnabled(process.env.AUTO_GENERATE_ALLURE_REPORT);
+            const autoOpenAllure = isFlagEnabled(process.env.AUTO_OPEN_ALLURE_REPORT);
+
+            if (!postRunAiEnabled) {
+                console.log('>>> [POST-RUN AI]: Disabled. Set POST_RUN_AI=true to include the diagnosis in the Allure report.');
+            } else {
                 console.log('>>> [POST-RUN AI]: Starting synchronous post-run analyzer.');
                 console.log(`>>> [POST-RUN AI]: Progress log: ${path.join(errorShotsDir, 'post-run-ai.log')}`);
 
@@ -123,11 +160,21 @@ export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOpt
                 } catch (error) {
                     console.error('>>> [POST-RUN AI ERROR]:', error);
                 }
-            } else {
-                console.log('>>> [POST-RUN AI]: Disabled. Set POST_RUN_AI=true to include the diagnosis in the Allure report.');
             }
 
-            console.log(`>>> [GLOBAL HOOK] Tests finished. Result: ${result}`);
+            if (autoGenerateAllure || autoOpenAllure) {
+                console.log(`>>> [ALLURE]: Generating report from ${allureResultsDir} to ${allureReportDir}.`);
+                const generated = generateAllureReport(allureResultsDir, allureReportDir);
+                if (generated) {
+                    console.log(`>>> [ALLURE]: Report generated at ${allureReportDir}.`);
+                    if (autoOpenAllure) {
+                        console.log(`>>> [ALLURE]: Opening report from ${allureReportDir}.`);
+                        openAllureReport(allureReportDir);
+                    }
+                } else {
+                    console.error('>>> [ALLURE ERROR]: Failed to generate Allure report.');
+                }
+            }
         }
     };
 };
