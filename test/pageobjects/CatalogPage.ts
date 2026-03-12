@@ -16,8 +16,7 @@ export type PaymentDetails = {
 };
 
 export interface ICatalogPage {
-    selectCatalogMenuItem(): Promise<void>;
-    selectBackpackYellowItem(): Promise<void>;
+    scrollAndClickItemByTitle(): Promise<void>;
     addCurrentItemToCart(): Promise<void>;
     openCart(): Promise<void>;
     proceedToCheckout(): Promise<void>;
@@ -28,7 +27,7 @@ export interface ICatalogPage {
     reviewOrder(): Promise<void>;
     isReviewOrderPageLoaded(): Promise<boolean>;
     placeOrder(): Promise<void>;
-    isCheckoutCompletePageLoaded(): Promise<boolean>;
-    isContinueShoppingButtonClickable(): Promise<boolean>;
+    waitForCheckoutCompletePage(): Promise<void>;
+    waitForContinueShoppingButton(): Promise<void>;
     continueShopping(): Promise<void>;
 }

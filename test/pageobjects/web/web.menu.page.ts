@@ -1,8 +1,11 @@
 import { IMainMenuPage } from '../MainMenuPage';
 
 class WebMenuPage implements IMainMenuPage {
-    async selectLogin(): Promise<void> {
+    async selectLoginMenuItem(): Promise<void> {
         // Web login flow opens directly at / (login form), no menu selection required.
+    }
+    async selectCatalogMenuItem(): Promise<void> {
+        
     }
 }
 

@@ -124,7 +124,10 @@ async function analyzeFailure(errorMessage, xmlPath, screenshotPath) {
 
 async function run() {
   if (!fs.existsSync(reportDir)) {
-    return;
+    return {
+      processed: 0,
+      readyMessage: `No report directory found at ${reportDir}.`
+    };
   }
 
   appendLog('Post-run AI analyzer started.');
@@ -175,12 +178,26 @@ async function run() {
     appendLog(`Updated ${processed} manifest(s) in ${reportDir}.`);
     appendLog(readyMessage);
     console.log(`>>> [POST-RUN AI]: ${readyMessage}`);
+    return { processed, readyMessage };
   } else {
     appendLog('No pending manifests found. Nothing to analyze.');
+    return {
+      processed: 0,
+      readyMessage: `No pending manifests found in ${reportDir}.`
+    };
   }
 }
 
-run().catch((error) => {
-  appendLog(`POST-RUN AI ERROR: ${error.message}`);
-  console.error('>>> [POST-RUN AI ERROR]:', error);
-});
+async function runPostRunAIAnalysis() {
+  return run();
+}
+
+module.exports = { runPostRunAIAnalysis };
+
+if (require.main === module) {
+  runPostRunAIAnalysis().catch((error) => {
+    appendLog(`POST-RUN AI ERROR: ${error.message}`);
+    console.error('>>> [POST-RUN AI ERROR]:', error);
+    process.exitCode = 1;
+  });
+}

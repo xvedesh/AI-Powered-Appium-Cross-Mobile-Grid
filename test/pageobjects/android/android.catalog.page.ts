@@ -1,10 +1,9 @@
 import { PURCHASE_FLOW } from '../../config/constants';
+import { CHECKOUT_DATA } from '../../data/checkout';
 import { ICatalogPage, PaymentDetails, ShippingDetails } from '../CatalogPage';
 
 class AndroidCatalogPage implements ICatalogPage {
-    private get catalogMenuItem() { return $(PURCHASE_FLOW.CATALOG_MENU_ITEM.android); }
-    private get backpackYellowItem() { return $(PURCHASE_FLOW.BACKPACK_YELLOW_ITEM.android); }
-    private get addToCartButton() { return $(PURCHASE_FLOW.ADD_TO_CART_BUTTON.android); }
+    private get item() { return $(PURCHASE_FLOW.ITEM.android(CHECKOUT_DATA.productName)); }
     private get cartIcon() { return $(PURCHASE_FLOW.CART_ICON.android); }
     private get proceedToCheckoutButton() { return $(PURCHASE_FLOW.PROCEED_TO_CHECKOUT_BUTTON.android); }
     private get shippingFullNameField() { return $(PURCHASE_FLOW.SHIPPING_FULL_NAME.android); }
@@ -26,22 +25,29 @@ class AndroidCatalogPage implements ICatalogPage {
     private get checkoutCompleteAnchor() { return $(PURCHASE_FLOW.CHECKOUT_COMPLETE_PAGE_ANCHOR.android); }
     private get continueShoppingButton() { return $(PURCHASE_FLOW.CONTINUE_SHOPPING_BUTTON.android); }
 
-    private async scrollToElement(element: ChainablePromiseElement): Promise<void> {
-        try {
-            await element.scrollIntoView();
-        } catch {
-            // Fall back to a straight wait when the driver can already resolve the element.
-        }
+    async scrollAndClickItemByTitle(): Promise<void> {
+        await $(PURCHASE_FLOW.ANDROID_SCROLL.toText(CHECKOUT_DATA.productName));
+        await this.item.waitForDisplayed({ timeout: 5000 });
+        await this.item.click();
     }
 
-    private async clickElement(element: ChainablePromiseElement): Promise<void> {
-        await this.scrollToElement(element);
-        await element.waitForDisplayed({ timeout: 10000 });
-        await element.click();
+    async addCurrentItemToCart(): Promise<void> {
+        const addToCartButton = $(PURCHASE_FLOW.ANDROID_SCROLL.toDescriptionContains('add product'));
+        await addToCartButton.waitForDisplayed({ timeout: 5000 });
+        await addToCartButton.click();
+    }
+
+    async openCart(): Promise<void> {
+        await this.cartIcon.waitForDisplayed();
+        await this.cartIcon.click();
+    }
+
+    async proceedToCheckout(): Promise<void> {
+        await this.proceedToCheckoutButton.waitForDisplayed({ timeout: 5000 });
+        await this.proceedToCheckoutButton.click();
     }
 
     private async setInputValue(element: ChainablePromiseElement, value: string): Promise<void> {
-        await this.scrollToElement(element);
         await element.waitForDisplayed({ timeout: 10000 });
         await element.clearValue();
         await element.setValue(value);
@@ -56,7 +62,6 @@ class AndroidCatalogPage implements ICatalogPage {
     }
 
     private async isBillingAddressCheckboxSelected(): Promise<boolean> {
-        await this.scrollToElement(this.billingAddressCheckbox);
         await this.billingAddressCheckbox.waitForDisplayed({ timeout: 10000 });
 
         for (const attributeName of ['checked', 'selected', 'value']) {
@@ -77,26 +82,6 @@ class AndroidCatalogPage implements ICatalogPage {
         }
     }
 
-    async selectCatalogMenuItem(): Promise<void> {
-        await this.clickElement(this.catalogMenuItem);
-    }
-
-    async selectBackpackYellowItem(): Promise<void> {
-        await this.clickElement(this.backpackYellowItem);
-    }
-
-    async addCurrentItemToCart(): Promise<void> {
-        await this.clickElement(this.addToCartButton);
-    }
-
-    async openCart(): Promise<void> {
-        await this.clickElement(this.cartIcon);
-    }
-
-    async proceedToCheckout(): Promise<void> {
-        await this.clickElement(this.proceedToCheckoutButton);
-    }
-
     async fillShippingAddress(data: ShippingDetails): Promise<void> {
         await this.setInputValue(this.shippingFullNameField, data.fullName);
         await this.setInputValue(this.shippingAddressLine1Field, data.addressLine1);
@@ -109,7 +94,8 @@ class AndroidCatalogPage implements ICatalogPage {
     }
 
     async goToPayment(): Promise<void> {
-        await this.clickElement(this.toPaymentButton);
+        await this.toPaymentButton.waitForDisplayed();
+        await this.toPaymentButton.click();
     }
 
     async fillPaymentDetails(data: PaymentDetails): Promise<void> {
@@ -122,36 +108,37 @@ class AndroidCatalogPage implements ICatalogPage {
 
     async ensureBillingAddressSameAsShippingSelected(): Promise<void> {
         if (!(await this.isBillingAddressCheckboxSelected())) {
-            await this.clickElement(this.billingAddressCheckbox);
+            await this.billingAddressCheckbox.waitForDisplayed();
+            await this.billingAddressCheckbox.click();
         }
     }
 
     async reviewOrder(): Promise<void> {
-        await this.clickElement(this.reviewOrderButton);
+        await this.reviewOrderButton.waitForDisplayed();
+        await this.reviewOrderButton.click();
     }
 
     async isReviewOrderPageLoaded(): Promise<boolean> {
-        await this.scrollToElement(this.reviewOrderAnchor);
         await this.reviewOrderAnchor.waitForDisplayed({ timeout: 10000 });
         return this.reviewOrderAnchor.isDisplayed();
     }
 
     async placeOrder(): Promise<void> {
-        await this.clickElement(this.placeOrderButton);
+        await this.placeOrderButton.waitForDisplayed();
+        await this.placeOrderButton.click();
     }
 
-    async isCheckoutCompletePageLoaded(): Promise<boolean> {
+    async waitForCheckoutCompletePage(): Promise<void> {
         await this.checkoutCompleteAnchor.waitForDisplayed({ timeout: 10000 });
-        return this.checkoutCompleteAnchor.isDisplayed();
     }
 
-    async isContinueShoppingButtonClickable(): Promise<boolean> {
+    async waitForContinueShoppingButton(): Promise<void> {
         await this.continueShoppingButton.waitForDisplayed({ timeout: 10000 });
-        return this.continueShoppingButton.isClickable();
     }
 
     async continueShopping(): Promise<void> {
-        await this.clickElement(this.continueShoppingButton);
+        await this.continueShoppingButton.waitForDisplayed();
+        await this.continueShoppingButton.click();
     }
 }
 

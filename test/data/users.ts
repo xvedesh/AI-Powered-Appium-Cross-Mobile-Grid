@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { faker } from '@faker-js/faker';
 
 // Determine if we are running Web or Mobile
-const isMobile = process.env.PLATFORM === 'ios' || process.env.PLATFORM === 'android';
+const platform = process.env.PLATFORM ?? '';
+const isMobile = platform.startsWith('ios') || platform.startsWith('android');
 
 export const USERS = {
     SUCCESS: {

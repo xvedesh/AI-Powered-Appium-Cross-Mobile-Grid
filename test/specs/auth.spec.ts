@@ -1,7 +1,7 @@
 import PageFactory from '../pageobjects/PageFactory';
 import allureReporter from '@wdio/allure-reporter';
 
-const platformLabel = process.env.TEST_PLATFORM ?? process.env.PLATFORM ?? 'unknown-platform';
+const platformLabel = process.env.PLATFORM ?? 'unknown-platform';
 
 describe(`Authentication Suite [${platformLabel}]`, () => {
     it(`should login successfully via Main Menu [${platformLabel}]`, async function () {
@@ -22,7 +22,7 @@ describe(`Authentication Suite [${platformLabel}]`, () => {
         });
 
         await allureReporter.step('User click Login menu', async () => {
-            await menuPage.selectLogin();
+            await menuPage.selectLoginMenuItem();
         });
 
         await allureReporter.step('User click credentials link', async () => {

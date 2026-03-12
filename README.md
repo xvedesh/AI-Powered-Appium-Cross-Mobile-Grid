@@ -1,12 +1,14 @@
-# AppiumSauceDemo (WDIO v9 + TypeScript)
+# AppiumSauceDemo
 
-Cross-platform sandbox for 4 targets:
-- `ios-native` (XCUITest)
-- `android-native` (UiAutomator2)
-- `ios-web` (mobile Safari)
-- `android-web` (mobile Chrome)
+Mobile automation framework built with WebdriverIO v9, TypeScript, and Appium.
 
-## Run Matrix
+Supported targets:
+- `ios-native` via XCUITest
+- `android-native` via UiAutomator2
+- `ios-web` via mobile Safari
+- `android-web` via mobile Chrome
+
+## Run Commands
 
 Primary scripts:
 
@@ -17,7 +19,7 @@ npm run test:ios:web
 npm run test:android:web
 ```
 
-Fresh variants (clean reports first):
+Fresh runs:
 
 ```bash
 npm run test:ios:native:fresh
@@ -26,9 +28,84 @@ npm run test:ios:web:fresh
 npm run test:android:web:fresh
 ```
 
-Backward-compatible aliases still exist:
+Single-spec execution:
+
+```bash
+npm run test:ios:native -- --spec ./test/specs/auth.spec.ts
+npm run test:android:native -- --spec ./test/specs/purchaseOneItem.spec.ts
+npm run test:ios:web -- --spec ./test/specs/auth.spec.ts
+npm run test:android:web -- --spec ./test/specs/purchaseOneItem.spec.ts
+```
+
+Single-spec execution with fresh cleanup:
+
+```bash
+npm run test:ios:native:fresh -- --spec ./test/specs/auth.spec.ts
+npm run test:android:native:fresh -- --spec ./test/specs/purchaseOneItem.spec.ts
+npm run test:ios:web:fresh -- --spec ./test/specs/auth.spec.ts
+npm run test:android:web:fresh -- --spec ./test/specs/purchaseOneItem.spec.ts
+```
+
+Backward-compatible aliases:
 - `npm run test:ios` -> `test:ios:native`
 - `npm run test:android` -> `test:android:native`
+
+## Allure Reports
+
+Single-platform report:
+
+```bash
+npx allure generate allure-results/ios-native --clean -o allure-report/ios-native
+npx allure open allure-report/ios-native
+
+npx allure generate allure-results/android-native --clean -o allure-report/android-native
+npx allure open allure-report/android-native
+
+npx allure generate allure-results/ios-web --clean -o allure-report/ios-web
+npx allure open allure-report/ios-web
+
+npx allure generate allure-results/android-web --clean -o allure-report/android-web
+npx allure open allure-report/android-web
+```
+
+Single-platform temporary report:
+
+```bash
+npx allure serve allure-results/ios-native
+npx allure serve allure-results/android-native
+npx allure serve allure-results/ios-web
+npx allure serve allure-results/android-web
+```
+
+Consolidated native report:
+
+```bash
+npm run test:ios:native:fresh & npm run test:android:native:fresh & wait
+npx allure generate allure-results/ios-native allure-results/android-native --clean -o allure-report/consolidated
+npx allure open allure-report/consolidated
+```
+
+Temporary consolidated native report:
+
+```bash
+npm run test:ios:native:fresh & npm run test:android:native:fresh & wait
+npx allure serve allure-results/ios-native allure-results/android-native
+```
+
+Consolidated web report:
+
+```bash
+npm run test:ios:web:fresh & npm run test:android:web:fresh & wait
+npx allure generate allure-results/ios-web allure-results/android-web --clean -o allure-report/consolidated
+npx allure open allure-report/consolidated
+```
+
+Temporary consolidated web report:
+
+```bash
+npm run test:ios:web:fresh & npm run test:android:web:fresh & wait
+npx allure serve allure-results/ios-web allure-results/android-web
+```
 
 ## Environment Variables
 
@@ -36,93 +113,72 @@ Core:
 
 ```env
 TEST_ENV=qa
-# PLATFORM is optional for entry configs, but used by legacy wdio.conf.ts
-PLATFORM=ios-native
+DEFAULT_PLATFORM=android-native
 
-# Preferred single server URL
-APPIUM_SERVER=http://192.168.0.32:4723
+# Preferred shared Appium server
+APPIUM_SERVER=http://127.0.0.1:4723
 
-# Legacy fallbacks (still supported)
-IOS_APPIUM_SERVER=http://192.168.0.32:4723
-ANDROID_APPIUM_SERVER=http://192.168.0.32:4725/wd/hub
+# Optional per-platform overrides
+IOS_APPIUM_SERVER=http://127.0.0.1:4723
+ANDROID_APPIUM_SERVER=http://127.0.0.1:4725/wd/hub
 ```
 
-Native app paths (required only for native targets):
+Native app paths:
 
 ```env
-IOS_APP_PATH="/Users/user/apps/My Demo App.app"
-ANDROID_APP_PATH="/Users/user/apps/mda-2.2.0-25.apk"
+IOS_APP_PATH="/absolute/path/My Demo App.app"
+ANDROID_APP_PATH="/absolute/path/mda.apk"
 ```
 
-Common optional vars:
+Common optional variables:
 
 ```env
 IOS_DEVICE_NAME="iPhone 14 Pro Max"
 IOS_PLATFORM_VERSION=16.2
-ANDROID_DEVICE_NAME="Samsung S23"
-ANDROID_PLATFORM_VERSION=11
-POST_RUN_AI=false
+ANDROID_DEVICE_NAME="Pixel 7 Pro"
+ANDROID_PLATFORM_VERSION=13
+POST_RUN_AI=true
 ```
 
-## Remote Appium Base Path (`/wd/hub`)
+Notes:
+- `DEFAULT_PLATFORM` is used by the generic `wdio.conf.ts` entrypoint.
+- `PLATFORM` is resolved at runtime by the platform-specific configs.
+- `TEST_ENV` falls back to `NODE_ENV` and defaults to `qa`.
+- `POST_RUN_AI=true` waits for post-run AI analysis to finish so the diagnosis is written into `allure-results/<platform>` before report generation.
 
-WDIO now parses full Appium URL and uses `hostname/port/path` correctly.
-This fixes Android errors like `requested resource not found` when Appium is hosted with `/wd/hub`.
+## Appium Server URL and Base Path
+
+The framework supports both root-path and `/wd/hub` Appium URLs.
 
 Examples:
+- `APPIUM_SERVER=http://127.0.0.1:4723`
+- `ANDROID_APPIUM_SERVER=http://127.0.0.1:4725/wd/hub`
 
-- `APPIUM_SERVER=http://192.168.0.32:4725`
-  - hostname: `192.168.0.32`
-  - port: `4725`
-  - path: `/`
-
-- `APPIUM_SERVER=http://192.168.0.32:4725/wd/hub`
-  - hostname: `192.168.0.32`
-  - port: `4725`
-  - path: `/wd/hub`
+The server URL is parsed into `hostname`, `port`, and `path`, which avoids Android routing issues when Appium is started with `--base-path /wd/hub`.
 
 ## TEST_ENV Switching
-
-Env provider reads `TEST_ENV` (fallback: `NODE_ENV`, default: `qa`).
 
 ```bash
 TEST_ENV=qa npm run test:ios:web
 TEST_ENV=stage npm run test:ios:web
 ```
 
-Dummy env configs:
+Available sample env configs:
 - `test/config/envs/qa.ts`
 - `test/config/envs/stage.ts`
 
-## Remote Appium Prerequisites (Android host)
+## Android Setup
 
-On the machine where Appium runs for Android:
-- Android SDK installed
-- `ANDROID_HOME` or `ANDROID_SDK_ROOT` exported
-- `adb` available in PATH
-- UiAutomator2 driver installed in Appium
-- Device/emulator online (`adb devices`)
+Configure these on the machine where Appium runs.
 
-## Remote Appium Host Notes
+Requirements:
+- Android SDK
+- `ANDROID_HOME` or `ANDROID_SDK_ROOT`
+- `adb` in `PATH`
+- Appium with `uiautomator2`
+- connected device or running emulator
 
-For both Android and iOS remote execution:
-- The remote Appium host must contain the required platform tooling.
-- The test runner machine only sends WebDriver requests to the remote Appium server.
-- If Appium is restarted from another shell, terminal tab, login session, or service, it may lose access to environment variables or tooling configuration unless that context is configured too.
-
-## Android Appium Remote Setup
-
-These Android SDK requirements must be configured on the machine where Appium runs, not just on the test runner machine.
-
-### Android setup order on the Appium host
-
-1. Add Android SDK environment variables to `~/.zshrc`
-
-Required environment variables:
-- `ANDROID_HOME`
-- `ANDROID_SDK_ROOT`
-
-Recommended `~/.zshrc` entries:
+Suggested shell configuration:
 
 ```bash
 export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
@@ -130,15 +186,10 @@ export ANDROID_HOME="$ANDROID_SDK_ROOT"
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
-2. Reload the shell
+Reload and verify:
 
 ```bash
 source ~/.zshrc
-```
-
-3. Verify the Android SDK environment in the same shell
-
-```bash
 echo $ANDROID_HOME
 echo $ANDROID_SDK_ROOT
 which adb
@@ -147,101 +198,58 @@ adb devices
 $ANDROID_HOME/emulator/emulator -list-avds
 ```
 
-4. If the emulator is not running, start it
-
-First, list available AVDs:
-
-```bash
-$HOME/Library/Android/sdk/emulator/emulator -list-avds
-```
-
-Then start the required AVD:
+Start an emulator if needed:
 
 ```bash
 $HOME/Library/Android/sdk/emulator/emulator -avd <AVD_NAME>
 ```
 
-Example:
-
-```bash
-$HOME/Library/Android/sdk/emulator/emulator -avd Pixel_7_Pro_API_33
-```
-
-If the SDK paths are already available in `PATH`, the shorter form also works:
-
-```bash
-emulator -avd <YOUR_AVD_NAME>
-```
-
-5. Confirm the emulator or device is visible in `adb`
-
-Expected `adb devices` output should include a connected emulator or device, for example:
-
-```text
-List of devices attached
-emulator-5554	device
-```
-
-`adb devices` must show a connected emulator or physical device before running Android tests.
-
-6. Start Appium from the same shell session
+Start Appium:
 
 ```bash
 appium -p 4725 --base-path /wd/hub
 ```
 
-Appium must be started in the same shell session where these Android SDK variables are loaded, unless your service or daemon configuration already defines them.
-
-7. Check Appium status
+Check status:
 
 ```bash
 curl http://127.0.0.1:4725/wd/hub/status
 ```
 
-## iOS Appium Remote Setup
+## iOS Setup
 
-iOS automation requirements must be configured on the machine where Appium runs.
+Configure these on the machine where Appium runs.
 
-iOS automation requires macOS with Xcode installed.
-
-Required tools on the Appium host:
+Requirements:
+- macOS
 - Xcode
 - Xcode Command Line Tools
-- Appium
-- `appium-xcuitest-driver`
+- Appium with `xcuitest`
 - iOS Simulator
 
-### iOS setup order on the Appium host
-
-1. Verify Xcode and Simulator tooling
+Verify tooling:
 
 ```bash
 xcodebuild -version
 xcrun simctl list devices
+appium driver list --installed
 ```
 
-2. Configure the active Xcode path
+Configure Xcode:
 
 ```bash
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 xcode-select -p
-```
-
-3. Accept the Xcode license and ensure command line tools are available
-
-```bash
 sudo xcodebuild -license accept
-xcode-select --install
 ```
 
-4. Verify Appium drivers
+Install the Appium driver if needed:
 
 ```bash
-appium driver list --installed
 appium driver install xcuitest
 ```
 
-5. Boot the simulator
+Boot the simulator:
 
 ```bash
 xcrun simctl boot "iPhone 14 Pro Max"
@@ -249,39 +257,27 @@ open -a Simulator
 xcrun simctl list devices | grep Booted
 ```
 
-6. Start the iOS Appium server on the Appium host
+Start Appium:
 
 ```bash
 appium -p 4723 --base-path /wd/hub
 ```
 
-7. Check Appium status
+Check status:
 
 ```bash
 curl http://127.0.0.1:4723/wd/hub/status
 ```
 
-Additional note:
-- If Appium is started as a background service or daemon, verify it is using the correct macOS user account, Xcode selection, and signing/toolchain context.
-
-## Remote Test Runner Examples
-
-Run these from the test runner machine after the remote Appium host is ready:
-
-```bash
-npm run test:android:native:fresh
-npm run test:ios:native:fresh
-```
-
 ## Config Layout
 
-- Shared config: `wdio.base.conf.ts`
-- Entry configs:
+- shared config: `wdio.base.conf.ts`
+- platform entry configs:
   - `wdio.ios.native.conf.ts`
   - `wdio.android.native.conf.ts`
   - `wdio.ios.web.conf.ts`
   - `wdio.android.web.conf.ts`
-- Caps:
+- capability configs:
   - `test/config/caps/ios.native.caps.ts`
   - `test/config/caps/android.native.caps.ts`
   - `test/config/caps/ios.web.caps.ts`
@@ -289,6 +285,7 @@ npm run test:ios:native:fresh
 
 ## Notes
 
-- Keep secrets out of repo (`.env` should stay local).
-- `POST_RUN_AI=true` enables post-run analyzer. Default is disabled to avoid CI-side background process issues.
-- Keep `PageFactory` pattern; it now routes mobile-web targets to `test/pageobjects/web/*` using `browserName` detection.
+- Keep secrets out of the repo.
+- Keep `.env` local.
+- The current framework is still under development; cloud execution documentation will be added later.
+- `PageFactory` routes mobile web targets to `test/pageobjects/web/*` based on `browserName`.

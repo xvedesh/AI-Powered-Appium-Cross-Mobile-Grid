@@ -2,7 +2,7 @@ export type PlatformTarget = 'ios-native' | 'android-native' | 'ios-web' | 'andr
 
 const VALID_PLATFORMS: PlatformTarget[] = ['ios-native', 'android-native', 'ios-web', 'android-web'];
 
-export const resolvePlatform = (input = process.env.PLATFORM): PlatformTarget => {
+export const resolvePlatform = (input = process.env.DEFAULT_PLATFORM ?? process.env.PLATFORM): PlatformTarget => {
     const raw = (input ?? 'android-native').toLowerCase();
 
     if (raw === 'ios') return 'ios-native';
@@ -10,7 +10,7 @@ export const resolvePlatform = (input = process.env.PLATFORM): PlatformTarget =>
     if (VALID_PLATFORMS.includes(raw as PlatformTarget)) return raw as PlatformTarget;
 
     throw new Error(
-        `Unsupported PLATFORM="${raw}". Use one of: ${VALID_PLATFORMS.join(', ')}`
+        `Unsupported platform default "${raw}". Use one of: ios, android, ${VALID_PLATFORMS.join(', ')}`
     );
 };
 

@@ -1,3 +1,4 @@
 export interface IMainMenuPage {
-    selectLogin(): Promise<void>;
+    selectLoginMenuItem(): Promise<void>;
+    selectCatalogMenuItem(): Promise<void>;
 }

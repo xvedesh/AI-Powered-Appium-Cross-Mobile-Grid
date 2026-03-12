@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import path from 'path';
-import { spawn } from 'child_process';
 import allureReporter from '@wdio/allure-reporter';
 import ContextCollector from './test/util/ContextCollector';
 import { PlatformTarget, parseServerUrl, resolveAppiumServer } from './test/config/server.provider';
@@ -11,12 +10,6 @@ type CreateWdioConfigOptions = {
 };
 
 const toArtifactKey = (platform: PlatformTarget): string => platform.replace(/[^a-z0-9-]/gi, '-');
-
-const toLegacyPlatformLabel = (platform: PlatformTarget): string => {
-    if (platform.startsWith('ios')) return 'ios';
-    if (platform.startsWith('android')) return 'android';
-    return platform;
-};
 
 export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOptions): WebdriverIO.Config => {
     const testEnv = (process.env.TEST_ENV ?? process.env.NODE_ENV ?? 'qa').toLowerCase();
@@ -30,8 +23,7 @@ export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOpt
         process.env.APPIUM_SERVER || process.env.IOS_APPIUM_SERVER || process.env.ANDROID_APPIUM_SERVER
     );
 
-    process.env.PLATFORM = toLegacyPlatformLabel(platform);
-    process.env.TEST_PLATFORM = platform;
+    process.env.PLATFORM = platform;
 
     const artifactKey = toArtifactKey(platform);
     const allureResultsDir = process.env.ALLURE_RESULTS_DIR ?? `allure-results/${artifactKey}`;
@@ -95,12 +87,15 @@ export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOpt
         afterTest: async function (test, _context, { error, passed }) {
             if (!passed) {
                 const msg = error ? error.message : 'Unknown Error';
+                const postRunAiEnabled = (process.env.POST_RUN_AI ?? 'false').toLowerCase() === 'true';
 
                 try {
                     await ContextCollector.collectErrorContext(test.title, msg);
                     allureReporter.addAttachment(
                         'AI Failure Diagnosis',
-                        `AI analysis is scheduled post-run. See updated manifest in ${errorShotsDir}.`,
+                        postRunAiEnabled
+                            ? `AI analysis will run after the test execution completes. Generate the Allure report after the run finishes to see the diagnosis.`
+                            : `AI analysis is disabled. Set POST_RUN_AI=true to include the diagnosis in the Allure report.`,
                         'text/plain'
                     );
                 } catch (err) {
@@ -113,17 +108,23 @@ export const createWdioConfig = ({ platform, capabilities }: CreateWdioConfigOpt
             const postRunAiEnabled = (process.env.POST_RUN_AI ?? 'false').toLowerCase() === 'true';
 
             if (postRunAiEnabled) {
-                const analyzerScript = path.join(process.cwd(), 'test', 'util', 'postRunAIAnalyzer.js');
-                const child = spawn(process.execPath, [analyzerScript], {
-                    detached: true,
-                    stdio: 'ignore',
-                    env: process.env
-                });
-                child.unref();
-                console.log('>>> [POST-RUN AI]: Analyzer started in background.');
-                console.log(`>>> [POST-RUN AI]: Follow progress in ${path.join(errorShotsDir, 'post-run-ai.log')}`);
+                console.log('>>> [POST-RUN AI]: Starting synchronous post-run analyzer.');
+                console.log(`>>> [POST-RUN AI]: Progress log: ${path.join(errorShotsDir, 'post-run-ai.log')}`);
+
+                try {
+                    const { runPostRunAIAnalysis } = require('./test/util/postRunAIAnalyzer.js');
+                    const analysisResult = await runPostRunAIAnalysis();
+                    if (analysisResult.processed > 0) {
+                        console.log(`>>> [POST-RUN AI]: Completed. Updated ${analysisResult.processed} manifest(s).`);
+                        console.log(`>>> [POST-RUN AI]: ${analysisResult.readyMessage}`);
+                    } else {
+                        console.log('>>> [POST-RUN AI]: No pending manifests found.');
+                    }
+                } catch (error) {
+                    console.error('>>> [POST-RUN AI ERROR]:', error);
+                }
             } else {
-                console.log('>>> [POST-RUN AI]: Disabled. Set POST_RUN_AI=true to enable background analyzer.');
+                console.log('>>> [POST-RUN AI]: Disabled. Set POST_RUN_AI=true to include the diagnosis in the Allure report.');
             }
 
             console.log(`>>> [GLOBAL HOOK] Tests finished. Result: ${result}`);

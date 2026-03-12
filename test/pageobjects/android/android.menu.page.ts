@@ -2,10 +2,15 @@ import { IMainMenuPage } from '../MainMenuPage';
 import { MENU_SCREEN } from '../../config/constants';
 
 class AndroidMenuPage implements IMainMenuPage {
-    async selectLogin(): Promise<void> {
-        const loginItem = $(MENU_SCREEN.LOGIN_ITEM.android);
-        await loginItem.waitForDisplayed({ timeout: 5000 });
-        await loginItem.click();
+    async selectLoginMenuItem(): Promise<void> {
+        const loginMenuItem = $(MENU_SCREEN.LOGIN_MENU_ITEM.android);
+        await loginMenuItem.waitForDisplayed({ timeout: 5000 });
+        await loginMenuItem.click();
+    }
+    async selectCatalogMenuItem(): Promise<void> {
+        const catalogMenuItem = $(MENU_SCREEN.CATALOG_MENU_ITEM.android);
+        await catalogMenuItem.waitForDisplayed({timeout: 5000});
+        await catalogMenuItem.click();
     }
 }
 
