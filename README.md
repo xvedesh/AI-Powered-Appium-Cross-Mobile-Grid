@@ -8,6 +8,56 @@ Supported targets:
 - `ios-web` via mobile Safari
 - `android-web` via mobile Chrome
 
+## Framework Overview
+
+This framework is designed for one test suite to run across native mobile apps and mobile web with the same WebdriverIO + TypeScript foundation. It uses environment-aware configuration, platform-specific capabilities, and page objects to keep test code reusable while still handling iOS and Android differences where needed.
+
+At a high level, the framework provides:
+- cross-platform execution for iOS and Android
+- support for both native app and mobile web flows
+- page object based test design for maintainability
+- Allure reporting for execution visibility
+- an AI failure analysis agent that explains failed runs using captured artifacts
+
+## AI Failure Analysis Agent
+
+This project includes an AI agent for post-run failure diagnosis. Its job is not to generate tests or drive the device live during execution. Instead, it reviews failure artifacts after a test fails and adds a structured technical analysis to the run output and Allure report.
+
+What the agent does:
+- reads the failure message, stack trace, execution metadata, page source XML, and screenshot when available
+- extracts useful failure signals such as suspicious locators, context issues, timeout patterns, and likely framework touchpoints
+- classifies the failure into categories like `locator_issue`, `synchronization_issue`, `interaction_issue`, `context_issue`, `environment_issue`, `data_issue`, `app_bug`, or `framework_issue`
+- returns a probable root cause, confidence score, likely ownership, evidence, and recommended next actions
+- saves the analysis as text and JSON artifacts and injects it into the matching Allure result
+
+Benefits of the agent:
+- reduces manual triage time after failed runs
+- gives a more consistent first diagnosis across teams
+- helps separate automation problems from app, backend, or infrastructure issues
+- makes Allure reports more useful because the failure explanation is attached directly to the test result
+- supports demo and local debugging workflows without changing the actual test logic
+
+## How the Agent Is Implemented
+
+The implementation is a lightweight post-run analysis pipeline:
+
+1. When a test fails, the framework stores failure artifacts such as the error details, screenshot, XML source, device data, and execution context in a manifest.
+2. `test/util/postRunAIAnalyzer.ts` scans pending manifests after execution.
+3. `test/util/ai/FailureAnalysisAgent.ts` builds the AI input from those artifacts and sends it through `test/util/AIService.ts`.
+4. The OpenAI request uses a strict prompt that asks for JSON-only output with a fixed schema so the response can be parsed safely.
+5. The analysis is normalized, saved as `_analysis.txt` and `_analysis.json`, and then attached to the matching Allure result entry.
+6. If AI is disabled or the response cannot be parsed, the framework falls back to rule-based analysis so the report still contains a useful diagnosis.
+
+## How It Works in Practice
+
+The agent is enabled only when `OPENAI_API_KEY` is available. During a run, the tests execute normally. After the run, if `POST_RUN_AI=true`, the framework waits for failure analysis to complete before generating the report. This ensures the AI diagnosis is already written into `allure-results/<platform>` and shows up inside the final Allure report.
+
+This design keeps the framework readable and predictable:
+- test execution remains standard WebdriverIO + Appium
+- AI is isolated to post-run diagnostics
+- the suite still works without AI, because fallback logic is built in
+- report generation stays compatible with normal Allure workflows
+
 ## Run Commands
 
 Primary scripts:
@@ -153,6 +203,8 @@ IOS_DEVICE_NAME="iPhone 14 Pro Max"
 IOS_PLATFORM_VERSION=16.2
 ANDROID_DEVICE_NAME="Pixel 7 Pro"
 ANDROID_PLATFORM_VERSION=13
+OPENAI_API_KEY="<your-api-key>"
+OPENAI_FAILURE_ANALYSIS_MODEL="gpt-4o-mini"
 POST_RUN_AI=true
 AUTO_GENERATE_ALLURE_REPORT=true
 AUTO_OPEN_ALLURE_REPORT=true
@@ -162,6 +214,8 @@ Notes:
 - `DEFAULT_PLATFORM` is used by the generic `wdio.conf.ts` entrypoint.
 - `PLATFORM` is resolved at runtime by the platform-specific configs.
 - `TEST_ENV` falls back to `NODE_ENV` and defaults to `qa`.
+- `OPENAI_API_KEY` enables the AI failure analysis agent.
+- `OPENAI_FAILURE_ANALYSIS_MODEL` is optional and defaults to `gpt-4o-mini`.
 - `POST_RUN_AI=true` waits for post-run AI analysis to finish so the diagnosis is written into `allure-results/<platform>` before report generation.
 - `AUTO_GENERATE_ALLURE_REPORT=true` generates the platform report automatically at the end of the run.
 - `AUTO_OPEN_ALLURE_REPORT=true` opens the generated platform report automatically after generation. This is intended for local demo use, not CI.
