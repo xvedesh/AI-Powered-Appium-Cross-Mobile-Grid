@@ -1,5 +1,5 @@
 export const CHECKOUT_DATA = {
-    productName: 'Sauce Labs Backpack (yell.,k)',
+    productName: 'Sauce Labs Backpack (yellow)',
     shipping: {
         fullName: 'Rebecca Winter',
         addressLine1: 'Mandorley 112',
